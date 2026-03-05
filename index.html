@@ -83,11 +83,34 @@
 
             <button id="btn-generate" class="primary-btn">Generate</button>
 
+            <div class="preset-section">
+                <h3>Presets</h3>
+                <div class="control-group">
+                    <select id="preset-select">
+                        <option value="">-- Select Preset --</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <button id="btn-save-preset" style="flex: 1;">Save Preset</button>
+                    <button id="btn-delete-preset" style="flex: 1; background: #cc3333;">Delete</button>
+                </div>
+            </div>
+
             <div class="export-section">
                 <h3>Export</h3>
-                <button id="btn-export-json">JSON</button>
-                <button id="btn-export-csv">CSV</button>
-                <button id="btn-copy-clip">Copy to Clipboard</button>
+                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                    <button id="btn-export-json" style="flex: 1;">JSON</button>
+                    <button id="btn-export-csv" style="flex: 1;">CSV</button>
+                </div>
+                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                    <button id="btn-export-obj" style="flex: 1;">OBJ</button>
+                    <button id="btn-export-stl" style="flex: 1;">STL</button>
+                </div>
+                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                    <button id="btn-export-schematic" style="flex: 1;" title="Classic Minecraft format">.schematic</button>
+                    <button id="btn-export-mcfunction" style="flex: 1;" title="Minecraft commands">.mcfunction</button>
+                </div>
+                <button id="btn-copy-clip" style="width: 100%;">Copy to Clipboard</button>
             </div>
         </aside>
 

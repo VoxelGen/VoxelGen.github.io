@@ -12,7 +12,7 @@ import { ProceduralArchBridge } from '../shapes/ProceduralArchBridge.js';
 import { ProceduralParaboloid } from '../shapes/ProceduralParaboloid.js';
 import { ProceduralHelix } from '../shapes/ProceduralHelix.js';
 import { Renderer2D } from '../renderer/Renderer2D.js';
-import { exportJSON, exportCSV, copyToClipboard } from '../export/Exporter.js';
+import { exportJSON, exportCSV, copyToClipboard, exportOBJ, exportSTL, exportMCFunction, exportSchematic } from '../export/Exporter.js';
 import { BlockRegistry } from '../materials/BlockRegistry.js';
 
 export class UI {
@@ -44,7 +44,15 @@ export class UI {
         
         this.btnExportJSON = document.getElementById('btn-export-json');
         this.btnExportCSV = document.getElementById('btn-export-csv');
+        this.btnExportOBJ = document.getElementById('btn-export-obj');
+        this.btnExportSTL = document.getElementById('btn-export-stl');
+        this.btnExportSchematic = document.getElementById('btn-export-schematic');
+        this.btnExportMCFunction = document.getElementById('btn-export-mcfunction');
         this.btnCopyClip = document.getElementById('btn-copy-clip');
+
+        this.presetSelect = document.getElementById('preset-select');
+        this.btnSavePreset = document.getElementById('btn-save-preset');
+        this.btnDeletePreset = document.getElementById('btn-delete-preset');
 
         this.renderer2D = new Renderer2D('canvas-2d');
         
@@ -205,7 +213,17 @@ export class UI {
 
         this.btnExportJSON.addEventListener('click', () => exportJSON(this.currentBlocks));
         this.btnExportCSV.addEventListener('click', () => exportCSV(this.currentBlocks));
+        this.btnExportOBJ.addEventListener('click', () => exportOBJ(this.currentBlocks));
+        this.btnExportSTL.addEventListener('click', () => exportSTL(this.currentBlocks));
+        this.btnExportMCFunction.addEventListener('click', () => exportMCFunction(this.currentBlocks));
+        this.btnExportSchematic.addEventListener('click', () => exportSchematic(this.currentBlocks));
         this.btnCopyClip.addEventListener('click', () => copyToClipboard(this.currentBlocks));
+
+        this.btnSavePreset.addEventListener('click', () => this.savePreset());
+        this.btnDeletePreset.addEventListener('click', () => this.deletePreset());
+        this.presetSelect.addEventListener('change', () => this.loadPreset());
+        
+        this.loadPresetsList();
         
         // Resize events
         window.addEventListener('resize', () => {
@@ -303,8 +321,8 @@ export class UI {
         this.updateLayerControls(shapeType);
         
         const currentY = parseInt(this.layerSlider.value) || 0;
-        this.renderer2D.setData(this.currentBlocks, currentY);
-        
+        this.renderer2D.draw(this.currentBlocks);
+
         if (this.renderer3D) {
             const materialType = this.materialSelect ? this.materialSelect.value : 'solid';
             const textureType = this.blockTypeSelect ? this.blockTypeSelect.value : 'stone';
@@ -312,6 +330,110 @@ export class UI {
         }
     }
 
+    getPresets() {
+        const presets = localStorage.getItem('voxelgen_presets');
+        return presets ? JSON.parse(presets) : {};
+    }
+
+    savePresets(presets) {
+        localStorage.setItem('voxelgen_presets', JSON.stringify(presets));
+        this.loadPresetsList();
+    }
+
+    loadPresetsList() {
+        const presets = this.getPresets();
+        const currentVal = this.presetSelect.value;
+        this.presetSelect.innerHTML = '<option value="">-- Select Preset --</option>';
+        for (const name in presets) {
+            const option = document.createElement('option');
+            option.value = name;
+            option.innerText = name;
+            this.presetSelect.appendChild(option);
+        }
+        if (presets[currentVal]) {
+            this.presetSelect.value = currentVal;
+        }
+    }
+
+    savePreset() {
+        let name = prompt("Enter preset name:");
+        if (!name) return;
+        name = name.trim();
+        if (name === '') return;
+
+        const shapeType = this.shapeSelect.value;
+        const config = this.shapeConfigs[shapeType];
+
+        const params = {
+            shape: shapeType,
+            material: this.materialSelect.value,
+            blockType: this.blockTypeSelect.value,
+            hollow: this.modeShell.checked,
+            thickness: this.wallThickness.value,
+            values: {}
+        };
+
+        config.params.forEach(param => {
+            const el = document.getElementById(`param-${param.name}`);
+            if (param.type === 'checkbox') {
+                params.values[param.name] = el.checked;
+            } else {
+                params.values[param.name] = parseFloat(el.value);
+            }
+        });
+
+        const presets = this.getPresets();
+        presets[name] = params;
+        this.savePresets(presets);
+        this.presetSelect.value = name;
+    }
+
+    deletePreset() {
+        const name = this.presetSelect.value;
+        if (!name) {
+            alert("No preset selected!");
+            return;
+        }
+        if (confirm(`Delete preset "${name}"?`)) {
+            const presets = this.getPresets();
+            delete presets[name];
+            this.savePresets(presets);
+            this.presetSelect.value = '';
+        }
+    }
+
+    loadPreset() {
+        const name = this.presetSelect.value;
+        if (!name) return;
+        const presets = this.getPresets();
+        const preset = presets[name];
+        if (!preset) return;
+
+        this.shapeSelect.value = preset.shape;
+        this.materialSelect.value = preset.material || 'solid';
+        this.blockTypeSelect.value = preset.blockType || 'stone';
+
+        this.modeShell.checked = preset.hollow;
+        this.wallThickness.value = preset.thickness || 1;
+        this.wallThicknessGroup.style.display = preset.hollow ? 'flex' : 'none';
+        this.blockTypeGroup.style.display = preset.material === 'texture' ? 'flex' : 'none';
+
+        this.updateParamsUI();
+
+        const config = this.shapeConfigs[preset.shape];
+        config.params.forEach(param => {
+            const el = document.getElementById(`param-${param.name}`);
+            if (preset.values[param.name] !== undefined) {
+                if (param.type === 'checkbox') {
+                    el.checked = preset.values[param.name];
+                } else {
+                    el.value = preset.values[param.name];
+                }
+            }
+        });
+
+        this.generate();
+    }
     updateLayerControls(shapeType) {
         if (this.currentBlocks.length === 0) {
             this.layerSlider.min = 0;
