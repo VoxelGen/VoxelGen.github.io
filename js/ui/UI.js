@@ -11,6 +11,7 @@ import { ProceduralTower } from '../shapes/ProceduralTower.js';
 import { ProceduralArchBridge } from '../shapes/ProceduralArchBridge.js';
 import { ProceduralParaboloid } from '../shapes/ProceduralParaboloid.js';
 import { ProceduralHelix } from '../shapes/ProceduralHelix.js';
+import { ProceduralSpiralStairs } from '../shapes/ProceduralSpiralStairs.js';
 import { Renderer2D } from '../renderer/Renderer2D.js';
 import { exportJSON, exportCSV, copyToClipboard, exportOBJ, exportSTL, exportMCFunction, exportSchematic } from '../export/Exporter.js';
 import { BlockRegistry } from '../materials/BlockRegistry.js';
@@ -73,6 +74,15 @@ export class UI {
                 { name: 'ringSpacing', label: 'Rings (0=None)', value: 10 },
                 { name: 'taper', label: 'Taper (0-1)', value: 0.5, step: 0.1, min: 0 },
                 { name: 'topPlatform', label: 'Top Platform', value: true, type: 'checkbox' }
+            ]},
+            spiral_stairs: { class: ProceduralSpiralStairs, params: [
+                { name: 'radius', label: 'Outer Radius', value: 10 },
+                { name: 'height', label: 'Total Height', value: 20 },
+                { name: 'stepHeight', label: 'Step Height', value: 1 },
+                { name: 'stepDepth', label: 'Step Depth (Arc)', value: 2 },
+                { name: 'stairWidth', label: 'Stair Width', value: 5 },
+                { name: 'innerRadius', label: 'Inner Core Radius', value: 2 },
+                { name: 'centralColumn', label: 'Central Column', value: true, type: 'checkbox' }
             ]},
             paraboloid: { class: ProceduralParaboloid, params: [
                 { name: 'radius', label: 'Radius', value: 15 },
